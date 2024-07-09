@@ -1,45 +1,69 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title></title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-    #view {
-        display: flex; /* This line makes the child elements sit side by side */
-    }
-    #chat, #chat-window {
-        border: 1px solid #000;
-        height: 300px;
-        overflow-y: scroll;
-    }
-    #chat {
-        width: 80%; /* Adjusted width */
-        float: left;
-    }
-    #chat-window {
-        width: 20%; /* Adjusted width */
-        float: right;
-    }
-        </style>
-    </head>
-    <body>
-        <h2>Chat app</h2>
-        <div id="view">
-            <div id="chat">
-                <div id="output"></div>
-                
-            </div>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <style>
+        /* Add your styles here */
+        body { font-family: Arial, sans-serif; }
+        #messages { margin-bottom: 20px; }
+        .message { border-bottom: 1px solid #ccc; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Chat App</h1>
+    <div id="messages"></div>
+    <input type="text" id="username" placeholder="Username">
+    <input type="text" id="message" placeholder="Type your message here...">
+    <button onclick="sendMessage()">Send</button>
 
-            <div id="chat-window">
-                <input type="text" id="message" placeholder="Message" style="width: 80%">
-                <button id="send" style="width: 15%">Send</button>
-            </div>
-        </div>
-        <script>
+    <script>
+        // Function to fetch messages and display them
+        async function fetchMessages() {
+            const response = await fetch('/messages');
+            const data = await response.json();
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = ''; // Clear current messages
+            data.messages.forEach(msg => {
+                const msgDiv = document.createElement('div');
+                msgDiv.classList.add('message');
+                msgDiv.textContent = `${msg[0]}: ${msg[1]} (${msg[2]})`;
+                messagesDiv.appendChild(msgDiv);
+            });
+        }
 
-        </script>
-    </body>
+        // Function to send a new message
+        async function sendMessage() {
+            const username = document.getElementById('username').value;
+            const message = document.getElementById('message').value;
+            if (message.trim() === '') {
+                alert('Please enter a message');
+                return;
+            }
+            await fetch('/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, message }),
+            });
+            document.getElementById('message').value = ''; // Clear the input field
+            fetchMessages(); // Refresh the messages
+        }
+
+        // Add event listener to the message input field to listen for Enter key press
+        document.getElementById('message').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // Prevent the default action to avoid form submission
+            sendMessage();
+        }
+        });
+        // Initial fetch of messages
+        fetchMessages();
+
+        // Optionally, set an interval to refresh messages every few seconds
+        setInterval(fetchMessages, 5000);
+    </script>
+</body>
 </html>

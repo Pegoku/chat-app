@@ -1,6 +1,6 @@
 # pip freeze > requirements.txt
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import sqlite3
 import datetime
 
@@ -19,8 +19,9 @@ def init_db():
 def insert_message(username, message):
     conn = sqlite3.connect('chat.db')
     c = conn.cursor()
+    timestamp = datetime.datetime.now().strftime("%H:%M %d-%m-%Y")
     c.execute("INSERT INTO messages (username, message, timestamp) VALUES (?, ?, ?)",
-              (username, message, datetime.datetime.now().isoformat()))
+              (username, message, timestamp))
     conn.commit()
     conn.close()
 
@@ -43,6 +44,10 @@ def send_message():
 def fetch_messages():
     messages = get_messages()
     return jsonify({'messages': messages})
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 if __name__ == '__main__':
     init_db()
