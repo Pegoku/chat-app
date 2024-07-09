@@ -1,69 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat App</title>
-    <style>
-        /* Add your styles here */
-        body { font-family: Arial, sans-serif; }
-        #messages { margin-bottom: 20px; }
-        .message { border-bottom: 1px solid #ccc; padding: 10px; }
-    </style>
-</head>
-<body>
-    <h1>Chat App</h1>
-    <div id="messages"></div>
-    <input type="text" id="username" placeholder="Username">
-    <input type="text" id="message" placeholder="Type your message here...">
-    <button onclick="sendMessage()">Send</button>
-
-    <script>
-        // Function to fetch messages and display them
-        async function fetchMessages() {
-            const response = await fetch('/messages');
-            const data = await response.json();
-            const messagesDiv = document.getElementById('messages');
-            messagesDiv.innerHTML = ''; // Clear current messages
-            data.messages.forEach(msg => {
-                const msgDiv = document.createElement('div');
-                msgDiv.classList.add('message');
-                msgDiv.textContent = `${msg[0]}: ${msg[1]} (${msg[2]})`;
-                messagesDiv.appendChild(msgDiv);
-            });
-        }
-
-        // Function to send a new message
-        async function sendMessage() {
-            const username = document.getElementById('username').value;
-            const message = document.getElementById('message').value;
-            if (message.trim() === '') {
-                alert('Please enter a message');
-                return;
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Chat App</title>
+        <style>
+            /* Add your styles here */
+            body {
+                font-family: Arial, sans-serif;
             }
-            await fetch('/send', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ username, message }),
-            });
-            document.getElementById('message').value = ''; // Clear the input field
-            fetchMessages(); // Refresh the messages
-        }
+            #messages {
+                margin-bottom: 20px;
+            }
+            .message {
+                border-bottom: 1px solid #ccc;
+                padding: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Chat App</h1>
+        <div id="messages"></div>
+        <input type="text" id="username" placeholder="Username" />
+        <input
+            type="text"
+            id="message"
+            placeholder="Type your message here..."
+        />
+        <button onclick="sendMessage()">Send</button>
 
-        // Add event listener to the message input field to listen for Enter key press
-        document.getElementById('message').addEventListener('keypress', function(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault(); // Prevent the default action to avoid form submission
-            sendMessage();
-        }
-        });
-        // Initial fetch of messages
-        fetchMessages();
+        <script>
+            // Function to fetch messages and display them
+            async function fetchMessages() {
+                const response = await fetch("/messages");
+                const data = await response.json();
+                const messagesDiv = document.getElementById("messages");
+                messagesDiv.innerHTML = ""; // Clear current messages
+                data.messages.forEach((msg) => {
+                    const msgDiv = document.createElement("div");
+                    msgDiv.classList.add("message");
+                    // Display the username in bold
+                    msgDiv.innerHTML = `<strong>${msg[0]}</strong>: ${msg[1]} (${msg[2]})`;
+                    messagesDiv.appendChild(msgDiv);
+                });
+            }
 
-        // Optionally, set an interval to refresh messages every few seconds
-        setInterval(fetchMessages, 5000);
-    </script>
-</body>
+            // Function to send a new message
+            async function sendMessage() {
+                const username = document.getElementById("username").value;
+                const message = document.getElementById("message").value;
+                if (message.trim() === "") {
+                    alert("Please enter a message");
+                    return;
+                }
+                await fetch("/send", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({ username, message }),
+                });
+                document.getElementById("message").value = ""; // Clear the input field
+                fetchMessages(); // Refresh the messages
+                // Store the username in a cookie
+                document.cookie = `username=${encodeURIComponent(
+                    username
+                )};path=/`;
+            }
+
+            // Function to get a cookie by name
+            function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2)
+                    return decodeURIComponent(parts.pop().split(";").shift());
+            }
+
+            // Fill the username field if the username cookie exists
+            window.onload = () => {
+                const username = getCookie("username");
+                if (username) {
+                    document.getElementById("username").value = username;
+                }
+                fetchMessages();
+                // Optionally, set an interval to refresh messages every few seconds
+                setInterval(fetchMessages, 5000);
+            };
+
+            // Add event listener to the message input field to listen for Enter key press
+            document
+                .getElementById("message")
+                .addEventListener("keypress", function (event) {
+                    if (event.key === "Enter") {
+                        event.preventDefault(); // Prevent the default action to avoid form submission
+                        sendMessage();
+                    }
+                });
+
+            // Function to fetch messages and display them
+            async function fetchMessages() {
+                const response = await fetch("/messages");
+                const data = await response.json();
+                const messagesDiv = document.getElementById("messages");
+                messagesDiv.innerHTML = ""; // Clear current messages
+                const currentUsername = getCookie("username"); // Get the current username from the cookie
+                data.messages.forEach((msg) => {
+                    const msgDiv = document.createElement("div");
+                    msgDiv.classList.add("message");
+                    // Check if the message username matches the cookie username
+                    const usernameDisplay =
+                        msg[0] === currentUsername
+                            ? `<strong><em>${msg[0]}</em></strong>`
+                            : `<strong>${msg[0]}</strong>`;
+                    // Display the username in bold, and in italic if it matches the cookie
+                    msgDiv.innerHTML = `${usernameDisplay}: ${msg[1]} (${msg[2]})`;
+                    messagesDiv.appendChild(msgDiv);
+                });
+            }
+        </script>
+    </body>
 </html>
